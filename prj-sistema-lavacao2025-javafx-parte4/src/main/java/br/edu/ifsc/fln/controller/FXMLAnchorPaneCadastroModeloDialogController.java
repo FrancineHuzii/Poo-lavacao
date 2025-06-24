@@ -7,7 +7,10 @@ package br.edu.ifsc.fln.controller;
 import br.edu.ifsc.fln.model.dao.MarcaDAO;
 import br.edu.ifsc.fln.model.database.Database;
 import br.edu.ifsc.fln.model.database.DatabaseFactory;
-import br.edu.ifsc.fln.model.domain.*;
+import br.edu.ifsc.fln.model.domain.ECategoria;
+import br.edu.ifsc.fln.model.domain.ETipoCombustivel;
+import br.edu.ifsc.fln.model.domain.Modelo;
+import br.edu.ifsc.fln.model.domain.Marca;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -131,14 +134,8 @@ public class FXMLAnchorPaneCadastroModeloDialogController implements Initializab
             modelo.setDescricao(tfDescricao.getText());
             modelo.setMarca(cbMarca.getSelectionModel().getSelectedItem());
             modelo.setCategoria(cbCategoria.getSelectionModel().getSelectedItem());
-
-            Motor motor = new Motor();
-            motor.setPotencia(Integer.parseInt(tfPotencia.getText()));
-            motor.setCombustivel(cbCombustivel.getSelectionModel().getSelectedItem());
-            modelo.setMotor(motor); // associa motor ao modelo
-
-           /* modelo.getMotor().setPotencia(Integer.parseInt(tfPotencia.getText()));
-            modelo.getMotor().setCombustivel(cbCombustivel.getSelectionModel().getSelectedItem());*/
+            modelo.getMotor().setPotencia(Integer.parseInt(tfPotencia.getText()));
+            modelo.getMotor().setCombustivel(cbCombustivel.getSelectionModel().getSelectedItem());
 
             btConfirmarClicked = true;
             dialogStage.close();

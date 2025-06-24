@@ -4,7 +4,9 @@
  */
 package br.edu.ifsc.fln.controller;
 
+import br.edu.ifsc.fln.model.dao.ClienteDAO;
 import br.edu.ifsc.fln.model.dao.CorDAO;
+import br.edu.ifsc.fln.model.dao.MarcaDAO;
 import br.edu.ifsc.fln.model.dao.ModeloDAO;
 import br.edu.ifsc.fln.model.database.Database;
 import br.edu.ifsc.fln.model.database.DatabaseFactory;
@@ -40,12 +42,24 @@ public class FXMLAnchorPaneCadastroVeiculoDialogController implements Initializa
     private ComboBox<Cor> cbCor;
 
     @FXML
+    private ComboBox<Marca> cbMarca;
+
+    @FXML
+    private ComboBox<ECategoria> cbCategoria;
+
+    @FXML
+    private ComboBox<Cliente> cbCliente;
+
+    @FXML
     private TextArea taVeiculoObservacoes;
 
     private final Database database = DatabaseFactory.getDatabase("mysql");
     private final Connection connection = database.conectar();
     private final ModeloDAO modeloDAO = new ModeloDAO();
     private final CorDAO corDAO = new CorDAO();
+    private final MarcaDAO marcaDAO = new MarcaDAO();
+
+    private final ClienteDAO clienteDAO = new ClienteDAO();
     
     private Stage dialogStage;
     private boolean btConfirmarClicked = false;
@@ -53,18 +67,40 @@ public class FXMLAnchorPaneCadastroVeiculoDialogController implements Initializa
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        marcaDAO.setConnection(connection);
         modeloDAO.setConnection(connection);
         corDAO.setConnection(connection);
+        clienteDAO.setConnection(connection);
+        carregarComboBoxCategorias();
+        carregarComboBoxMarcas();
         carregarComboBoxModelos();
         carregarComboBoxCores();
+        carregarComboBoxClientes();
         setFocusLostHandle();
     }
+
+    private List<Marca> listaMarcas;
+    private ObservableList<Marca> observableListMarcas;
 
     private List<Modelo> listaModelos;
     private ObservableList<Modelo> observableListModelos;
 
     private List<Cor> listaCores;
     private ObservableList<Cor> observableListCores;
+
+    private List<Cliente> listaClientes;
+    private ObservableList<Cliente> observableListClientes;
+
+
+    private void carregarComboBoxCategorias() {
+        cbCategoria.setItems(FXCollections.observableArrayList(ECategoria.values()));
+    }
+
+    private void carregarComboBoxMarcas() {
+        listaMarcas = marcaDAO.listar();
+        observableListMarcas = FXCollections.observableArrayList(listaMarcas);
+        cbMarca.setItems(observableListMarcas);
+    }
 
     private void carregarComboBoxModelos() {
         listaModelos = modeloDAO.listar();
@@ -77,6 +113,14 @@ public class FXMLAnchorPaneCadastroVeiculoDialogController implements Initializa
         observableListCores = FXCollections.observableArrayList(listaCores);
         cbCor.setItems(observableListCores);
     }
+
+    private void carregarComboBoxClientes() {
+        listaClientes = clienteDAO.listar();
+        observableListClientes = FXCollections.observableArrayList(listaClientes);
+        cbCliente.setItems(observableListClientes);
+    }
+
+
 
     private void setFocusLostHandle() {
         tfPlaca.focusedProperty().addListener((observable, oldValue, newValue) -> {
@@ -115,6 +159,9 @@ public class FXMLAnchorPaneCadastroVeiculoDialogController implements Initializa
             taVeiculoObservacoes.setText(veiculo.getObservacoes());
             cbModelo.getSelectionModel().select(veiculo.getModelo());
             cbCor.getSelectionModel().select(veiculo.getCor());
+            cbMarca.getSelectionModel().select(veiculo.getModelo().getMarca());
+            cbCategoria.getSelectionModel().select(veiculo.getModelo().getCategoria());
+            cbCliente.getSelectionModel().select(veiculo.getCliente());
         }
     }
 
@@ -125,6 +172,9 @@ public class FXMLAnchorPaneCadastroVeiculoDialogController implements Initializa
             veiculo.setObservacoes(taVeiculoObservacoes.getText());
             veiculo.setModelo(cbModelo.getSelectionModel().getSelectedItem());
             veiculo.setCor(cbCor.getSelectionModel().getSelectedItem());
+            veiculo.getModelo().setMarca(cbMarca.getSelectionModel().getSelectedItem());
+            veiculo.getModelo().setCategoria(cbCategoria.getSelectionModel().getSelectedItem());
+            veiculo.setCliente(cbCliente.getSelectionModel().getSelectedItem());
 
             btConfirmarClicked = true;
             dialogStage.close();

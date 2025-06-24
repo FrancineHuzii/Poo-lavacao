@@ -25,14 +25,14 @@ public class VeiculoDAO {
     }
 
     public boolean inserir(Veiculo veiculo) {
-        String sql = "INSERT INTO veiculo(placa, observacoes, id_cor, id_modelo, id_cliente) VALUES(?,?,?,?,?)";
+        String sql = "INSERT INTO veiculo(placa, id_modelo, id_cor, id_cliente, observacoes) VALUES(?,?,?,?,?)";
         try {
             PreparedStatement stmt = connection.prepareStatement(sql);
             stmt.setString(1, veiculo.getPlaca());
-            stmt.setString(2, veiculo.getObservacoes());
+            stmt.setInt(2, veiculo.getModelo().getId());
             stmt.setInt(3, veiculo.getCor().getId());
-            stmt.setInt(4, veiculo.getModelo().getId());
-            stmt.setInt(5, veiculo.getCliente().getId());
+            stmt.setInt(4, veiculo.getCliente().getId());
+            stmt.setString(5, veiculo.getObservacoes());
             stmt.execute();
             return true;
         } catch (SQLException ex) {
@@ -42,20 +42,34 @@ public class VeiculoDAO {
     }
 
     public boolean alterar(Veiculo veiculo) {
-        String sql = "UPDATE veiculo SET placa=?, observacoes=?, id_cor=?, id_modelo=?, id_cliente=? WHERE id=?";
+        String sqlVeiculo = "UPDATE veiculo SET placa=?, id_modelo=?, id_cor=?, id_cliente=?, observacoes=? WHERE id=?";
+        String sqlModelo = "UPDATE modelo SET categoria=? WHERE id=?";
         try {
-            PreparedStatement stmt = connection.prepareStatement(sql);
-            stmt.setString(1, veiculo.getPlaca());
-            stmt.setString(2, veiculo.getObservacoes());
-            stmt.setInt(3, veiculo.getCor().getId());
-            stmt.setInt(4, veiculo.getModelo().getId());
-            stmt.setInt(5, veiculo.getCliente().getId());
-            stmt.setInt(6, veiculo.getId());
-            stmt.execute();
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement stmtModelo = connection.prepareStatement(sqlModelo)) {
+                stmtModelo.setString(1, veiculo.getModelo().getCategoria().name());
+                stmtModelo.setInt(2, veiculo.getModelo().getId());
+                stmtModelo.executeUpdate();
+            }
+
+            try (PreparedStatement stmt = connection.prepareStatement(sqlVeiculo)) {
+                stmt.setString(1, veiculo.getPlaca());
+                stmt.setInt(2, veiculo.getModelo().getId());
+                stmt.setInt(3, veiculo.getCor().getId());
+                stmt.setInt(4, veiculo.getCliente().getId());
+                stmt.setString(5, veiculo.getObservacoes());
+                stmt.setInt(6, veiculo.getId());
+                stmt.executeUpdate();
+            }
+            connection.commit();
             return true;
         } catch (SQLException ex) {
+            try { connection.rollback(); } catch (SQLException ignored) {}
             Logger.getLogger(VeiculoDAO.class.getName()).log(Level.SEVERE, null, ex);
             return false;
+        } finally {
+            try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
         }
     }
 
@@ -93,10 +107,11 @@ public class VeiculoDAO {
     }
 
     public List<Veiculo> listagem() {
-        String sql = "SELECT v.id AS veiculo_id, v.placa AS veiculo_placa, v.observacoes AS veiculo_observacoes, m.id AS modelo_id, m.descricao AS modelo_descricao, c.id AS cor_id, c.nome AS cor_nome, cl.id AS cliente_id, cl.nome AS cliente_nome, cl.celular AS cliente_celular, cl.email AS cliente_email, cl.data_cadastro AS cliente_data_cadastro, pf.cpf AS pessoa_fisica_cpf, pf.data_nascimento AS pessoa_fisica_data_nascimento, pj.cnpj AS pessoa_juridica_cnpj, pj.inscricao_estadual AS pessoa_juridica_inscricao_estadual "
+        String sql = "SELECT v.id AS veiculo_id, v.placa AS veiculo_placa, v.observacoes AS veiculo_observacoes, m.id AS modelo_id, m.descricao AS modelo_descricao, m.categoria AS modelo_categoria, m.id_marca AS modelo_id_marca, c.id AS cor_id, c.nome AS cor_nome, ma.id AS marca_id, ma.nome AS marca_nome, cl.id AS cliente_id, cl.nome AS cliente_nome, cl.celular AS cliente_celular, cl.email AS cliente_email, cl.data_cadastro AS cliente_data_cadastro, pf.cpf AS pessoa_fisica_cpf, pf.data_nascimento AS pessoa_fisica_data_nascimento, pj.cnpj AS pessoa_juridica_cnpj, pj.inscricao_estadual AS pessoa_juridica_inscricao_estadual "
                 +       "FROM veiculo v "
                 +       "INNER JOIN cor c ON c.id = v.id_cor "
                 +       "INNER JOIN modelo m ON m.id = v.id_modelo "
+                +       "INNER JOIN marca ma ON ma.id = m.id_marca "
                 +       "INNER JOIN cliente cl ON cl.id = v.id_cliente "
                 +       "LEFT JOIN pessoa_fisica pf ON pf.id_cliente = cl.id "
                 +       "LEFT JOIN pessoa_juridica pj ON pj.id_cliente = cl.id;";
@@ -137,12 +152,22 @@ public class VeiculoDAO {
         Veiculo veiculo = new Veiculo();
         Modelo modelo = new Modelo();
         Cor cor = new Cor();
+        Marca marca = new Marca();
         veiculo.setModelo(modelo);
         veiculo.setCor(cor);
 
         veiculo.setId(resultado.getInt("veiculo_id"));
         veiculo.setPlaca(resultado.getString("veiculo_placa"));
+        modelo.setId(resultado.getInt("modelo_id"));
         modelo.setDescricao(resultado.getString("modelo_descricao"));
+        String categoriaStr = resultado.getString("modelo_categoria");
+        if (categoriaStr != null) {
+            modelo.setCategoria(ECategoria.valueOf(categoriaStr));
+        }
+        marca.setId(resultado.getInt("marca_id"));
+        marca.setNome(resultado.getString("marca_nome"));
+        modelo.setMarca(marca);
+        cor.setId(resultado.getInt("cor_id"));
         cor.setNome(resultado.getString("cor_nome"));
         veiculo.setObservacoes((resultado.getString("veiculo_observacoes")));
         int id_cliente = resultado.getInt("id_cliente");
@@ -158,12 +183,22 @@ public class VeiculoDAO {
         Veiculo veiculo = new Veiculo();
         Modelo modelo = new Modelo();
         Cor cor = new Cor();
+        Marca marca = new Marca();
         veiculo.setModelo(modelo);
         veiculo.setCor(cor);
 
         veiculo.setId(rs.getInt("veiculo_id"));
         veiculo.setPlaca(rs.getString("veiculo_placa"));
+        modelo.setId(rs.getInt("modelo_id"));
         modelo.setDescricao(rs.getString("modelo_descricao"));
+        String categoriaStr = rs.getString("modelo_categoria");
+        if (categoriaStr != null) {
+            modelo.setCategoria(ECategoria.valueOf(categoriaStr));
+        }
+        marca.setId(rs.getInt("marca_id"));
+        marca.setNome(rs.getString("marca_nome"));
+        modelo.setMarca(marca);
+        cor.setId(rs.getInt("cor_id"));
         cor.setNome(rs.getString("cor_nome"));
         veiculo.setObservacoes(rs.getString("veiculo_observacoes"));
         Cliente cliente;

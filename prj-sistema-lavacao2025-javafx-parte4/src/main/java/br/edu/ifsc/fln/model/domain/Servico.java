@@ -7,13 +7,15 @@ package br.edu.ifsc.fln.model.domain;
 public class Servico {
     private int id;
     private String descricao;
+    private double valor;
+    private static int pontos;
+    private ECategoria categoria;
+
     private double valorPequeno;
     private double valorMedio;
     private double valorGrande;
     private double valorMoto;
     private double valorPadrao;
-    private static int pontos;
-    private ECategoria categoria;
 
     public Servico() {
     }
@@ -53,6 +55,23 @@ public class Servico {
 
     public void setCategoria(ECategoria categoria) {
         this.categoria = categoria;
+    }
+
+    public double getValor() {
+        if (categoria == null) return 0.0;
+
+        return switch (categoria) {
+            case PEQUENO -> valorPequeno;
+            case MEDIO   -> valorMedio;
+            case GRANDE  -> valorGrande;
+            case MOTO    -> valorMoto;
+            case PADRAO  -> valorPadrao;
+            default -> 0.0;
+        };
+    }
+
+    public void setValor(double valor) {
+        this.valor = valor;
     }
 
     public double getValorPequeno() {

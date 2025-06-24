@@ -7,6 +7,8 @@ package br.edu.ifsc.fln.controller;
 import br.edu.ifsc.fln.model.dao.VeiculoDAO;
 import br.edu.ifsc.fln.model.database.Database;
 import br.edu.ifsc.fln.model.database.DatabaseFactory;
+import br.edu.ifsc.fln.model.domain.ECategoria;
+import br.edu.ifsc.fln.model.domain.Marca;
 import br.edu.ifsc.fln.model.domain.Veiculo;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -44,6 +46,12 @@ public class FXMLAnchorPaneCadastroVeiculoController implements Initializable {
     private Label lbVeiculoPlaca;
 
     @FXML
+    private Label lbVeiculoCategoria;
+
+    @FXML
+    private Label lbVeiculoMarca;
+
+    @FXML
     private Label lbVeiculoModelo;
 
     @FXML
@@ -56,7 +64,10 @@ public class FXMLAnchorPaneCadastroVeiculoController implements Initializable {
     private Label lbVeiculoCliente;
 
     @FXML
-    private TableColumn<Veiculo, String> tableColumnVeiculos;
+    private TableColumn<Veiculo, String> tableColumnPlaca;
+
+    @FXML
+    private TableColumn<Veiculo, String> tableColumnModelo;
 
     @FXML
     private TableView<Veiculo> tableViewVeiculos;
@@ -72,6 +83,7 @@ public class FXMLAnchorPaneCadastroVeiculoController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         veiculoDAO.setConnection(connection);
+
         carregarTableViewVeiculos();
         
         tableViewVeiculos.getSelectionModel().selectedItemProperty().addListener(
@@ -79,7 +91,9 @@ public class FXMLAnchorPaneCadastroVeiculoController implements Initializable {
     }     
     
     public void carregarTableViewVeiculos() {
-        tableColumnVeiculos.setCellValueFactory(new PropertyValueFactory<>("placa"));
+
+        tableColumnModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
+        tableColumnPlaca.setCellValueFactory(new PropertyValueFactory<>("placa"));
         
         listaVeiculos = veiculoDAO.listagem();
         
@@ -91,6 +105,10 @@ public class FXMLAnchorPaneCadastroVeiculoController implements Initializable {
         if (veiculo != null) {
             lbVeiculoId.setText(Integer.toString(veiculo.getId()));
             lbVeiculoPlaca.setText(veiculo.getPlaca());
+            ECategoria categoria = veiculo.getModelo().getCategoria();
+            lbVeiculoCategoria.setText(categoria.toString());
+            Marca marca = veiculo.getModelo().getMarca();
+            lbVeiculoMarca.setText(marca.toString());
             lbVeiculoModelo.setText(veiculo.getModelo().getDescricao());
             lbVeiculoCor.setText(veiculo.getCor().getNome());
             lbVeiculoCliente.setText(veiculo.getCliente().getNome());
@@ -99,6 +117,8 @@ public class FXMLAnchorPaneCadastroVeiculoController implements Initializable {
         } else {
             lbVeiculoId.setText("");
             lbVeiculoPlaca.setText("");
+            lbVeiculoCategoria.setText("");
+            lbVeiculoMarca.setText("");
             lbVeiculoModelo.setText("");
             lbVeiculoCor.setText("");
             lbVeiculoCliente.setText("");

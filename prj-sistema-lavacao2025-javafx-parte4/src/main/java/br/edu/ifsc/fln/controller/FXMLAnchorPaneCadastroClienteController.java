@@ -91,14 +91,15 @@ public class FXMLAnchorPaneCadastroClienteController implements Initializable {
         
         tableViewClientes.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> selecionarItemTableViewClientes(newValue));
-    }     
-    
+    }
+
     public void carregarTableViewCliente() {
         tableColumnClienteNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
-        
+
         listaClientes = clienteDAO.listar();
-        
+
         observableListClientes = FXCollections.observableArrayList(listaClientes);
+        tableViewClientes.setItems(null);
         tableViewClientes.setItems(observableListClientes);
     }
     
@@ -114,13 +115,17 @@ public class FXMLAnchorPaneCadastroClienteController implements Initializable {
             if (cliente instanceof PessoaFisica) {
                 lbClienteTipo.setText("Pessoa Fisica");
                 lbClienteCPFCNPJ.setText(((PessoaFisica) cliente).getCpf());
+                lbClienteInscricaoEstadual.setText("");
                 if (((PessoaFisica) cliente).getDataNascimento() != null){
                     lbClienteDataNascimento.setText(((PessoaFisica) cliente).getDataNascimento().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                } else {
+                    lbClienteDataNascimento.setText("");
                 }
-            } else {
+            } else if (cliente instanceof PessoaJuridica) {
                 lbClienteTipo.setText("Pessoa Juridica");
                 lbClienteCPFCNPJ.setText(((PessoaJuridica) cliente).getCnpj());
                 lbClienteInscricaoEstadual.setText(((PessoaJuridica) cliente).getInscricaoEstadual());
+                lbClienteDataNascimento.setText("");
             }
         } else {
             lbClienteId.setText(""); 
@@ -166,15 +171,15 @@ public class FXMLAnchorPaneCadastroClienteController implements Initializable {
             return null;
         }
     }
-    
-    @FXML 
+
+    @FXML
     public void handleBtAlterar() throws IOException {
         Cliente cliente = tableViewClientes.getSelectionModel().getSelectedItem();
         if (cliente != null) {
             boolean btConfirmarClicked = showFXMLAnchorPaneCadastroClienteDialog(cliente);
             if (btConfirmarClicked) {
                 clienteDAO.alterar(cliente);
-                carregarTableViewCliente();
+                carregarTableViewCliente(); // Recarrega lista completa
             }
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -214,7 +219,6 @@ public class FXMLAnchorPaneCadastroClienteController implements Initializable {
         
         //apresenta o diálogo e aguarda a confirmação do usuário
         dialogStage.showAndWait();
-        
         return controller.isBtConfirmarClicked();
     }
 }

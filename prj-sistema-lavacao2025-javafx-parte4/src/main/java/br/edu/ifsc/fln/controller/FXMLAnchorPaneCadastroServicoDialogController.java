@@ -65,7 +65,6 @@ public class FXMLAnchorPaneCadastroServicoDialogController implements Initializa
         servicoDAO.setConnection(connection);
         carregarComboBoxCategorias();
 
-        // Inicializa ComboBox com os valores do Enum
         cbServicoCategoria.setItems(FXCollections.observableArrayList(ECategoria.values()));
 
         // Inicializa os Spinners com valores entre 0.0 e 1000.0, step de 5.0
@@ -98,8 +97,11 @@ public class FXMLAnchorPaneCadastroServicoDialogController implements Initializa
 
     private void atualizarSpinnersPorCategoria() {
         ECategoria categoria = cbServicoCategoria.getSelectionModel().getSelectedItem();
+        atualizarSpinnersPorCategoria(categoria);
+    }
 
-        if (categoria == ECategoria.TODAS) {
+    private void atualizarSpinnersPorCategoria(ECategoria categoria) {
+        if(categoria == ECategoria.TODAS){
             spValorPequeno.setDisable(false);
             spValorMedio.setDisable(false);
             spValorGrande.setDisable(false);
@@ -143,39 +145,44 @@ public class FXMLAnchorPaneCadastroServicoDialogController implements Initializa
 
     public void setServico(Servico servico) {
         this.servico = servico;
+
+        // Preenche os campos
         this.tfServicoDescricao.setText(servico.getDescricao());
         this.tfServicoPontos.setText(String.valueOf(servico.getPontos()));
+
+        // Preenche os valores nos spinners
+        spValorPequeno.getValueFactory().setValue(servico.getValorPequeno());
+        spValorMedio.getValueFactory().setValue(servico.getValorMedio());
+        spValorGrande.getValueFactory().setValue(servico.getValorGrande());
+        spValorMoto.getValueFactory().setValue(servico.getValorMoto());
+        spValorPadrao.getValueFactory().setValue(servico.getValorPadrao());
+
+        // Preenche o ComboBox de categoria
+        cbServicoCategoria.setItems(FXCollections.observableArrayList(ECategoria.values()));
+        cbServicoCategoria.setValue(servico.getCategoria());
+
+        // Atualiza os Spinners conforme a categoria escolhida
+        cbServicoCategoria.valueProperty().addListener((obs, oldVal, newVal) -> atualizarSpinnersPorCategoria(newVal));
+        atualizarSpinnersPorCategoria(servico.getCategoria());
     }
 
     @FXML
-    public void handleBtConfirmar() {
-        if (servico != null) {
-            servico.setDescricao(tfServicoDescricao.getText());
-            servico.setPontos(Integer.parseInt(tfServicoPontos.getText()));
-            servico.setCategoria(cbServicoCategoria.getValue());
+    private void handleBtConfirmar() {
+        servico.setDescricao(tfServicoDescricao.getText());
+        servico.setCategoria(cbServicoCategoria.getValue());
+        servico.setPontos(Integer.parseInt(tfServicoPontos.getText()));
 
-            ECategoria categoria = cbServicoCategoria.getValue();
-            switch (categoria) {
-                case PEQUENO:
-                    servico.setValorPequeno(spValorPequeno.getValue());
-                    break;
-                case MEDIO:
-                    servico.setValorMedio(spValorMedio.getValue());
-                    break;
-                case GRANDE:
-                    servico.setValorGrande(spValorGrande.getValue());
-                    break;
-                case MOTO:
-                    servico.setValorMoto(spValorMoto.getValue());
-                    break;
-                case PADRAO:
-                    servico.setValorPadrao(spValorPadrao.getValue());
-                    break;
-            }
-
-            btConfirmarClicked = true;
-            dialogStage.close();
+        // Define o valor apenas da categoria atual
+        switch (servico.getCategoria()) {
+            case PEQUENO -> servico.setValorPequeno(spValorPequeno.getValue());
+            case MEDIO   -> servico.setValorMedio(spValorMedio.getValue());
+            case GRANDE  -> servico.setValorGrande(spValorGrande.getValue());
+            case MOTO    -> servico.setValorMoto(spValorMoto.getValue());
+            case PADRAO  -> servico.setValorPadrao(spValorPadrao.getValue());
         }
+
+        btConfirmarClicked = true;
+        dialogStage.close();
     }
     
     @FXML

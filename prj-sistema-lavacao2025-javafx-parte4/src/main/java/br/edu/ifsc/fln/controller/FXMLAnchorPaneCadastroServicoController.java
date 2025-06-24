@@ -7,6 +7,7 @@ package br.edu.ifsc.fln.controller;
 import br.edu.ifsc.fln.model.dao.ServicoDAO;
 import br.edu.ifsc.fln.model.database.Database;
 import br.edu.ifsc.fln.model.database.DatabaseFactory;
+import br.edu.ifsc.fln.model.domain.ECategoria;
 import br.edu.ifsc.fln.model.domain.Servico;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -47,19 +48,10 @@ public class FXMLAnchorPaneCadastroServicoController implements Initializable {
     private Label lbServicoPontos;
 
     @FXML
-    private Label lbServicoValorPequeno;
+    private Label lbServicoCategoria;
 
     @FXML
-    private Label lbServicoValorMedio;
-
-    @FXML
-    private Label lbServicoValorGrande;
-
-    @FXML
-    private Label lbServicoValorMoto;
-
-    @FXML
-    private Label lbServicoValorPadrao;
+    private Label lbServicoValor;
 
     @FXML
     private TableColumn<Servico, String> tableColumnServicoDescricao;
@@ -98,20 +90,23 @@ public class FXMLAnchorPaneCadastroServicoController implements Initializable {
             lbServicoId.setText(String.valueOf(servico.getId())); 
             lbServicoDescricao.setText(servico.getDescricao());
             lbServicoPontos.setText(String.valueOf(servico.getPontos()));
-            lbServicoValorPequeno.setText(String.valueOf(servico.getValorPequeno()));
-            lbServicoValorMedio.setText(String.valueOf(servico.getValorMedio()));
-            lbServicoValorGrande.setText(String.valueOf(servico.getValorGrande()));
-            lbServicoValorMoto.setText(String.valueOf(servico.getValorMoto()));
-            lbServicoValorPadrao.setText(String.valueOf(servico.getValorPadrao()));
+            lbServicoCategoria.setText(String.valueOf(servico.getCategoria()));
+            double valor = 0.0;
+            switch (servico.getCategoria()) {
+                case PEQUENO -> valor = servico.getValorPequeno();
+                case MEDIO   -> valor = servico.getValorMedio();
+                case GRANDE  -> valor = servico.getValorGrande();
+                case MOTO    -> valor = servico.getValorMoto();
+                case PADRAO  -> valor = servico.getValorPadrao();
+            }
+
+            lbServicoValor.setText(String.format("R$ %.2f", valor));
         } else {
             lbServicoId.setText(""); 
             lbServicoDescricao.setText("");
             lbServicoPontos.setText("");
-            lbServicoValorPequeno.setText("");
-            lbServicoValorMedio.setText("");
-            lbServicoValorGrande.setText("");
-            lbServicoValorMoto.setText("");
-            lbServicoValorPadrao.setText("");
+            lbServicoCategoria.setText("");
+            lbServicoValor.setText("");
         }
     }
     

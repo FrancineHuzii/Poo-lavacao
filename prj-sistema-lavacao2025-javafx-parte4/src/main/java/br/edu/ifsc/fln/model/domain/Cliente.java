@@ -10,7 +10,7 @@ import java.util.List;
 
 public class Cliente {
     protected int id;
-    protected String nome;;
+    protected String nome;
     protected String celular;
     protected String email;
     protected LocalDate dataCadastro;
@@ -18,9 +18,11 @@ public class Cliente {
     protected List<Veiculo> veiculos;
 
     public Cliente() {
+        this.veiculos = new ArrayList<>();
     }
 
     public Cliente(String nome, String celular, String email, LocalDate dataCadastro) {
+        this();
         this.nome = nome;
         this.celular = celular;
         this.email = email;

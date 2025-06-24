@@ -106,6 +106,6 @@ create table veiculo(
     constraint fk_veiculo_cliente foreign key(id_cliente) references cliente(id)
 ) engine = InnoDB;
 
-insert into veiculo(placa, id_cor, id_modelo, id_cliente) values("MDS1969", 2, 1, 1);
-insert into veiculo(placa, id_cor, id_modelo, id_cliente) values("POO2025", 1, 2, 2);
+insert into veiculo(placa, observacoes, id_cor, id_modelo, id_cliente) values("MDS1969","porta dianteira direita riscada", 2, 1, 1);
+insert into veiculo(placa, observacoes, id_cor, id_modelo, id_cliente) values("ABC1234","parachoque rachado", 1, 2, 2);
 select * from veiculo;

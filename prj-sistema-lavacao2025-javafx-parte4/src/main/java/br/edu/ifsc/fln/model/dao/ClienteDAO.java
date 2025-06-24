@@ -9,6 +9,7 @@ import br.edu.ifsc.fln.model.domain.PessoaFisica;
 import br.edu.ifsc.fln.model.domain.PessoaJuridica;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -28,30 +29,49 @@ public class ClienteDAO {
 
     public boolean inserir(Cliente cliente) {
         String sql = "INSERT INTO cliente(nome, celular, email, data_cadastro) VALUES(?,?,?,?)";
-        String sqlPF = "INSERT INTO pessoa_fisica(cpf, data_nascimento) VALUES(?,?)";
-        String sqlPJ = "INSERT INTO pessoa_juridica(cnpj, inscricao_estadual) VALUES(?,?)";
+        String sqlPF = "INSERT INTO pessoa_fisica(id_cliente, cpf, data_nascimento) VALUES(?,?,?)";
+        String sqlPJ = "INSERT INTO pessoa_juridica(id_cliente, cnpj, inscricao_estadual) VALUES(?,?,?)";
         try {
-            PreparedStatement stmt = connection.prepareStatement(sql);
+            PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            connection.setAutoCommit(false);
             stmt.setString(1, cliente.getNome());
             stmt.setString(2, cliente.getCelular());
             stmt.setString(3, cliente.getEmail());
-            stmt.setDate(4, java.sql.Date.valueOf(cliente.getDataCadastro()));
-            stmt.execute();
+            if (cliente.getDataCadastro() != null) {
+                stmt.setDate(4, java.sql.Date.valueOf(cliente.getDataCadastro()));
+            } else {
+                stmt.setNull(4, java.sql.Types.DATE);
+            }
+            stmt.executeUpdate();
+
+            ResultSet rs = stmt.getGeneratedKeys();
+            if (rs.next()) {
+                int idCliente = rs.getInt(1);
+                cliente.setId(idCliente);
+            } else {
+                throw new SQLException("Erro ao obter o ID do cliente.");
+            }
 
             if(cliente instanceof PessoaFisica){
                 stmt = connection.prepareStatement(sqlPF);
-                stmt.setString(1, ((PessoaFisica) cliente).getCpf());
-                stmt.setDate(2, java.sql.Date.valueOf(((PessoaFisica) cliente).getDataNascimento()));
-                stmt.execute();
+                stmt.setInt(1, cliente.getId());
+                stmt.setString(2, ((PessoaFisica) cliente).getCpf());
+                LocalDate dataNascimento = ((PessoaFisica) cliente).getDataNascimento();
+                if (dataNascimento != null) {
+                    stmt.setDate(3, java.sql.Date.valueOf(dataNascimento));
+                } else {
+                    stmt.setNull(3, java.sql.Types.DATE);
+                }
+                stmt.executeUpdate();
             } else {
                 stmt = connection.prepareStatement(sqlPJ);
-                stmt.setString(1,((PessoaJuridica) cliente).getCnpj());
-                stmt.setString(2,((PessoaJuridica) cliente).getInscricaoEstadual());
-                stmt.execute();
+                stmt.setInt(1, cliente.getId());
+                stmt.setString(2,((PessoaJuridica) cliente).getCnpj());
+                stmt.setString(3,((PessoaJuridica) cliente).getInscricaoEstadual());
+                stmt.executeUpdate();
             }
             connection.commit();
             return true;
-
         } catch (SQLException ex) {
             Logger.getLogger(ClienteDAO.class.getName()).log(Level.SEVERE, null, ex);
 
@@ -74,26 +94,31 @@ public class ClienteDAO {
 
     public boolean alterar(Cliente cliente) {
         String sql = "UPDATE cliente SET nome=?, celular=?, email=?, data_cadastro=? WHERE id=?";
-        String sqlPF = "UPDATE cliente SET cpf=?, nascimento=? WHERE id=?";
-        String sqlPJ = "UPDATE cliente SET cnpj=?, inscricao_estadual=? WHERE id=?";
+        String sqlPF = "UPDATE pessoa_fisica SET cpf=?, data_nascimento=? WHERE id_cliente=?";
+        String sqlPJ = "UPDATE pessoa_juridica SET cnpj=?, inscricao_estadual=? WHERE id_cliente=?";
         try {
+            connection.setAutoCommit(false);
             PreparedStatement stmt = connection.prepareStatement(sql);
             stmt.setString(1, cliente.getNome());
             stmt.setString(2, cliente.getCelular());
             stmt.setString(3,cliente.getEmail());
-            stmt.setDate(4, java.sql.Date.valueOf(cliente.getDataCadastro()));
+            LocalDate dataCadastro = cliente.getDataCadastro();
+            stmt.setDate(4, (dataCadastro != null ? java.sql.Date.valueOf(dataCadastro) : null));
             stmt.setInt(5, cliente.getId());
             stmt.execute();
 
             if(cliente instanceof PessoaFisica){
                 stmt = connection.prepareStatement(sqlPF);
                 stmt.setString(1, ((PessoaFisica) cliente).getCpf());
-                stmt.setDate(2, java.sql.Date.valueOf(((PessoaFisica) cliente).getDataNascimento()));
+                LocalDate dataNascimento = ((PessoaFisica) cliente).getDataNascimento();
+                stmt.setDate(2, (dataNascimento != null ? java.sql.Date.valueOf(dataNascimento) : null));
+                stmt.setInt(3, cliente.getId());
                 stmt.execute();
             } else {
                 stmt = connection.prepareStatement(sqlPJ);
                 stmt.setString(1,((PessoaJuridica) cliente).getCnpj());
                 stmt.setString(2,((PessoaJuridica) cliente).getInscricaoEstadual());
+                stmt.setInt(3, cliente.getId());
                 stmt.execute();
             }
             connection.commit();
@@ -101,20 +126,28 @@ public class ClienteDAO {
         } catch (SQLException ex) {
             Logger.getLogger(ClienteDAO.class.getName()).log(Level.SEVERE, null, ex);
             return false;
+        } finally {
+            try {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     public boolean remover(Cliente cliente) {
         String sql = "DELETE FROM cliente WHERE id=?";
         try {
-            PreparedStatement stmt = connection.prepareStatement(sql);
-            stmt.setInt(1, cliente.getId());
-            stmt.execute();
-            return true;
+            if(cliente != null){
+                PreparedStatement stmt = connection.prepareStatement(sql);
+                stmt.setInt(1, cliente.getId());
+                stmt.execute();
+                return true;
+            }
         } catch (SQLException ex) {
             Logger.getLogger(ClienteDAO.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
         }
+        return false;
     }
 
     public List<Cliente> listar() {
